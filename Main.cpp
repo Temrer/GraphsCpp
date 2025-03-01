@@ -8,6 +8,7 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 struct Edge {
     uint32_t parent;
@@ -62,8 +63,9 @@ void read_data(std::unordered_map<uint32_t, uint32_t *> &inbound,
     uint16_t out_size[vertices] = {0};
     // I don't expect very large out degrees so
     // a 16 bit representation should suffice
-    LinkedList *outbound_Ll[vertices] = {nullptr};
-    LinkedList *inbound_Ll[vertices] = {nullptr};
+
+    std::vector<LinkedList *> outbound_Ll(vertices, nullptr);
+    std::vector<LinkedList *> inbound_Ll(vertices, nullptr);
     // A list where the pointers to the linked lists will be stored
 
     uint32_t parent, child, cost;  // Read all data and store it
@@ -140,13 +142,10 @@ void read_data(std::unordered_map<uint32_t, uint32_t *> &inbound,
     input.close();
 }
 
+void create_order() {
 
-
-void create_order(){
 
 };
-
-
 
 // TODO(Temeraire): free allocated memory used when initializing vectors
 int main(int argc, char **argv) {
@@ -180,8 +179,6 @@ int main(int argc, char **argv) {
         free(entry.second);
     }
     std::cout.flush();
-
-
 
     auto end_time = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
