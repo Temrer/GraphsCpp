@@ -1,10 +1,13 @@
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <execution>
 #include <fstream>
 #include <functional>
 #include <iostream>
+#include <ostream>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -58,95 +61,184 @@ void read_data(std::unordered_map<uint32_t, uint32_t *> &inbound,
         return;
     }
 
-    uint16_t in_size[vertices] = {0};
-    uint16_t out_size[vertices] = {0};
-    // I don't expect very large out degrees so
-    // a 16 bit representation should suffice
-    LinkedList *outbound_Ll[vertices] = {nullptr};
-    LinkedList *inbound_Ll[vertices] = {nullptr};
-    // A list where the pointers to the linked lists will be stored
-
-    uint32_t parent, child, cost;  // Read all data and store it
-    std::cout << "Reading from file...\n";
-    LinkedList *outboundNode;
-    LinkedList *inboundNode;
-    for (uint32_t i = 0; i < edges; i++) {
-        input >> parent >> child >> cost;
-        // increase the out and in size
-        out_size[parent]++;
-        in_size[child]++;
-
-        // Add cost to the cost map
-        costs[{parent, child}] = cost;
-
-        // Add to outbound adjacency list (linked list per vertex)
-        outboundNode = new LinkedList(child);
-        outboundNode->next = outbound_Ll[parent];  // Insert at front of list
-        outbound_Ll[parent] = outboundNode;
-
-        // Add to inbound adjacency list (linked list per vertex)
-        inboundNode = new LinkedList(parent);
-        inboundNode->next = inbound_Ll[child];  // Insert at front of list
-        inbound_Ll[child] = inboundNode;
-    }
-
-    std::cout << parent << " " << child << " " << cost << "\n";
-
-    // after reading the data, store it in a in-out fast, memory-efficient way
-    // create arrays for outbound edges
-    // we will store in the first cell the size of the array
+    // initializing maps with an empty array
     for (uint32_t i = 0; i < vertices; i++) {
-        uint32_t *out = reinterpret_cast<uint32_t *>(
-            malloc(sizeof(uint32_t) * (out_size[i] + 1 + vertex_buffer)));
-
-        LinkedList *node, *next;
-        node = outbound_Ll[i];
-        out[0] = out_size[i];
-        // check if the list is not empty <good practice>
-        if (node != nullptr) {
-            for (int j = 0; j < out_size[i]; j++) {
-                out[j + 1] =
-                    node->value;    // Store the value of the current node
-                next = node->next;  // Get the next node
-                delete node;        // Free the memory of the current node
-                node = next;        // Move to the next node in the list
-            }
-        }
-        outbound[i] = out;  // passing the pointer of the array to the map
+        uint32_t *empty_in = reinterpret_cast<uint32_t *>(malloc(32));
+        uint32_t *empty_out = reinterpret_cast<uint32_t *>(malloc(32));
+        empty_in[0] = 0;
+        empty_out[0] = 0;
+        inbound[i] = empty_in;
+        outbound[i] = empty_out;
     }
 
-    // create arrays for inbound edges
-    for (uint32_t i = 0; i < vertices; i++) {
-        uint32_t *in = reinterpret_cast<uint32_t *>(
-            malloc(sizeof(uint32_t) * (in_size[i] + 1 + vertex_buffer)));
+    // Creating batches
+    uint16_t MAX_BATCH_SIZE = 10000, batch_size = MAX_BATCH_SIZE;
+    uint32_t consumed_edges = 0;
 
-        LinkedList *node, *next;
-        node = inbound_Ll[i];
-        in[0] = in_size[i];
-        // check if the list is not empty <good practice>
-        if (node != nullptr) {
-            for (int j = 0; j < in_size[i]; j++) {
-                in[j + 1] = node->value;  // Store the value of the current node
-                next = node->next;        // Get the next node
-                delete node;              // Free the memory of the current node
-                node = next;              // Move to the next node in the list
-            }
+    uint32_t last_parent = 0, last_child = 0;
+    while (consumed_edges < edges) {
+        if (MAX_BATCH_SIZE > edges - consumed_edges)
+            batch_size = edges - consumed_edges;
+
+        std::unordered_map<uint32_t, uint16_t> index_map, reverse_index_map;
+
+        uint16_t *in_size =
+            reinterpret_cast<uint16_t *>(malloc(sizeof(uint16_t) * batch_size));
+        uint16_t *out_size =
+            reinterpret_cast<uint16_t *>(malloc(sizeof(uint16_t) * batch_size));
+
+        for (uint16_t i = 0; i < batch_size; i++) {
+            in_size[i] = 0;
+            out_size[i] = 0;
         }
-        inbound[i] = in;  // passing the pointer of the array to the map
-    }
+        // I don't expect very large out degrees so
+        // a 16 bit representation should suffice
 
+        // uint32_t arr_size = sizeof(LinkedList *) * batch_size;
+        // LinkedList **outbound_Ll =
+        //     reinterpret_cast<LinkedList **>(malloc(arr_size));
+        // LinkedList **inbound_Ll =
+        //     reinterpret_cast<LinkedList **>(malloc(arr_size));
+        // if (outbound_Ll == nullptr || inbound_Ll == nullptr) {
+        //     std::cerr << "Memory allocation failed!" << std::endl;
+        //     return;
+        // }
+
+        LinkedList *outbound_Ll[batch_size] = {nullptr};
+        LinkedList *inbound_Ll[batch_size] = {nullptr};
+
+        // std::fill(outbound_Ll, outbound_Ll + arr_size, nullptr);
+        // std::fill(inbound_Ll, inbound_Ll + arr_size, nullptr);
+
+        // A list where the pointers to the linked lists will be stored
+        uint32_t parent, child, cost, childi, parenti,
+            local_index = 0;  // Read all data and store it
+        std::cout << "Reading from file...\n";
+        LinkedList *outboundNode;
+        LinkedList *inboundNode;
+        for (uint32_t i = 0; i < batch_size; i++) {
+            input >> parent >> child >> cost;
+            // find local index of parent and child
+            parenti = index_map[parent];
+            childi = index_map[child];
+            if (index_map.find(parent) == index_map.end()) {
+                parenti = local_index;
+                reverse_index_map[local_index] = parent;
+                index_map[parent] = local_index++;
+            }
+            if (index_map.find(child) == index_map.end()) {
+                reverse_index_map[local_index] = child;
+                childi = local_index;
+                index_map[child] = local_index++;
+            }
+
+            // increase the out and in size
+            out_size[parenti]++;
+            in_size[childi]++;
+
+            // Add cost to the cost map
+            costs[{parent, child}] = cost;
+
+            // Add to outbound adjacency list (linked list per vertex)
+            outboundNode = new LinkedList(child);
+            outboundNode->next =
+                outbound_Ll[parenti];  // Insert at front of list
+            outbound_Ll[parenti] = outboundNode;
+
+            // Add to inbound adjacency list (linked list per vertex)
+            inboundNode = new LinkedList(parent);
+            inboundNode->next = inbound_Ll[childi];  // Insert at front of list
+            inbound_Ll[childi] = inboundNode;
+        }
+
+        std::cout << parent << " " << child << " " << cost << "\n";
+
+        // after reading the data, store it in a in-out fast, memory-efficient
+        // way create arrays for outbound edges we will store in the first cell
+        // the size of the array
+        for (uint32_t i = 0; i < batch_size; i++) {
+            // convert to usable data
+            uint32_t i_value = reverse_index_map[i];
+
+            // check previous array size
+            uint32_t *vec = outbound[i_value];
+            uint16_t prev_out = vec[0];
+            uint16_t current_size = out_size[i] + prev_out;
+
+            uint32_t *out = reinterpret_cast<uint32_t *>(
+                malloc(sizeof(uint32_t) * (current_size + 1 + vertex_buffer)));
+            LinkedList *node, *next;
+            node = outbound_Ll[i];
+            out[0] = current_size;
+
+            // copy previous ellements to the new array
+            for (uint16_t h = 1; h <= prev_out; h++) out[h] = vec[h];
+            // free the previously allocated array
+            free(vec);
+
+            // check if the list is not empty <good practice>
+            uint16_t osize = out_size[i];
+            if (node != nullptr) {
+                for (int j = 0; j < osize; j++) {
+                    out[j + 1] =
+                        node->value;    // Store the value of the current node
+                    next = node->next;  // Get the next node
+                    delete node;        // Free the memory of the current node
+                    node = next;        // Move to the next node in the list
+                }
+            }
+            outbound[i_value] =
+                out;  // passing the pointer of the array to the map
+        }
+
+        // create arrays for inbound edges
+        for (uint32_t i = 0; i < batch_size; i++) {
+            // convert to usable data
+            uint32_t i_value = reverse_index_map[i];
+
+            // check previous array size
+            uint32_t *vec = inbound[i_value];
+            uint16_t prev_in = vec[0];
+            uint16_t current_size = in_size[i] + prev_in;
+
+            uint32_t *in = reinterpret_cast<uint32_t *>(
+                malloc(sizeof(uint32_t) * (current_size + 1 + vertex_buffer)));
+            LinkedList *node, *next;
+            node = inbound_Ll[i];
+            in[0] = current_size;
+
+            // copy previous ellements to the new array
+            for (uint16_t h = 1; h <= prev_in; h++) in[h] = vec[h];
+            // free the previously allocated array
+            free(vec);
+
+            node = inbound_Ll[i];
+            in[0] = in_size[i];
+            // check if the list is not empty <good practice>
+            if (node != nullptr) {
+                for (int j = 0; j < in_size[i]; j++) {
+                    in[j + 1] =
+                        node->value;    // Store the value of the current node
+                    next = node->next;  // Get the next node
+                    delete node;        // Free the memory of the current node
+                    node = next;        // Move to the next node in the list
+                }
+            }
+            inbound[i_value] =
+                in;  // passing the pointer of the array to the map
+        }
+
+        // free(outbound_Ll);
+        // free(inbound_Ll);
+
+        consumed_edges += batch_size;
+    }
     Vertices = vertices;
     Edges = edges;
     input.close();
 }
 
-
-
-void create_order(){
-
-};
-
-
+void create_order() {}
 
 // TODO(Temeraire): free allocated memory used when initializing vectors
 int main(int argc, char **argv) {
@@ -180,8 +272,6 @@ int main(int argc, char **argv) {
         free(entry.second);
     }
     std::cout.flush();
-
-
 
     auto end_time = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
