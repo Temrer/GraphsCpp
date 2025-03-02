@@ -1,4 +1,5 @@
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <execution>
@@ -10,11 +11,14 @@
 #include <utility>
 #include <vector>
 
+#define MAX_OPERATON_BUFFER 100
+
 struct Edge {
     uint32_t parent;
     uint32_t child;
-    uint32_t cost;
 };
+
+const Edge NULL_EDGE = {UINT32_MAX, UINT32_MAX};
 // assuming that there won't be a whole lot of edges to a single vertex, we can
 // use linked lists to store inbound and outbounding edges
 // Because the application is not supposed to traverse the data we can simply us
@@ -36,7 +40,57 @@ struct pair_hash {
     }
 };
 
-// A function that will read the specified file and load it into the program
+void print_menu() {
+    const std::string Menu =
+        "                MENU                 \n\
+======================================\n\
+1.  Show number of vertices           \n\
+2.  Check edges between vertices      \n\
+3.  Get in and out degrees of vertices\n\
+4.  Get Out Map of vertices           \n\
+5.  Get In Map of vertices            \n\
+6.  Get weights of edges              \n\
+7.  Modify weights of edges           \n\
+8.  Add vertices                      \n\
+9.  Remove vertices                   \n\
+10. Add edges                         \n\
+11. Remove edges                      \n\
+12. Save a copy                       \n\
+13. Open a Graph                      \n\
+--------------------------------------\n";
+
+    std::cout << Menu;
+}
+
+void choose_option(std::unordered_map<uint32_t, uint32_t *> &inbound,
+                   std::unordered_map<uint32_t, uint32_t *> &outbound,
+                   std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t,
+                                      pair_hash> &costs,
+                   uint32_t &Vertices, uint32_t &Edges) {
+    int option;
+    std::string soption;
+    while (!option) {
+        try {
+            option = std::stoi(soption);
+        } catch (std::exception &e) {
+            std::cout << "Please choose a valid option\n";
+        }
+    }
+
+    uint16_t remaining_operations = MAX_OPERATON_BUFFER;
+    switch (option) {
+        case 1:
+            std::cout << Vertices << "\n";
+            break;
+
+        case 2:
+            Edge arg_edges[MAX_OPERATON_BUFFER] = {NULL_EDGE};
+            break;
+    }
+}
+
+// A function that will read the specified file and load it into the
+// program
 void read_data(std::unordered_map<uint32_t, uint32_t *> &inbound,
                std::unordered_map<uint32_t, uint32_t *> &outbound,
                std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t,
@@ -45,7 +99,8 @@ void read_data(std::unordered_map<uint32_t, uint32_t *> &inbound,
                uint32_t vertex_buffer) {
     std::ifstream input(filename);
     if (!input.is_open()) {
-        // Raise an error telling that the file was not opened succesfully
+        // Raise an error telling that the file was not opened
+        // succesfully
         std::cerr << "Failed to open file " << filename << std::endl;
         return;
     }
@@ -94,9 +149,9 @@ void read_data(std::unordered_map<uint32_t, uint32_t *> &inbound,
 
     std::cout << parent << " " << child << " " << cost << "\n";
 
-    // after reading the data, store it in a in-out fast, memory-efficient way
-    // create arrays for outbound edges
-    // we will store in the first cell the size of the array
+    // after reading the data, store it in a in-out fast,
+    // memory-efficient way create arrays for outbound edges we will
+    // store in the first cell the size of the array
     for (uint32_t i = 0; i < vertices; i++) {
         uint32_t *out = reinterpret_cast<uint32_t *>(
             malloc(sizeof(uint32_t) * (out_size[i] + 1 + vertex_buffer)));
@@ -144,7 +199,6 @@ void read_data(std::unordered_map<uint32_t, uint32_t *> &inbound,
 
 void create_order() {
 
-
 };
 
 // TODO(Temeraire): free allocated memory used when initializing vectors
@@ -178,6 +232,7 @@ int main(int argc, char **argv) {
     for (auto &entry : inbound) {
         free(entry.second);
     }
+    print_menu();
     std::cout.flush();
 
     auto end_time = std::chrono::high_resolution_clock::now();
