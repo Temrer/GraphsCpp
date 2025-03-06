@@ -1,44 +1,38 @@
+// Copyright (C) 2025 Temrer
+// All rights reserved.
+//
+// This file is part of the project [Project Name].
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are met:
+// - Redistributions of source code must retain the above copyright notice,
+//   this list of conditions, and the following disclaimer.
+// - Redistributions in binary form must reproduce the above copyright notice,
+//   this list of conditions, and the following disclaimer in the documentation
+//   or other materials provided with the distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR "AS IS" AND ANY EXPRESS OR IMPLIED
+// WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+// MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
+// EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#include <sys/types.h>
+
 #include <chrono>
-#include <cstddef>
 #include <cstdint>
 #include <cstdio>
-#include <execution>
-#include <fstream>
-#include <functional>
 #include <iostream>
+#include <ostream>
 #include <string>
 #include <unordered_map>
-#include <utility>
-#include <vector>
 
-#define MAX_OPERATON_BUFFER 100
-
-struct Edge {
-    uint32_t parent;
-    uint32_t child;
-};
-
-const Edge NULL_EDGE = {UINT32_MAX, UINT32_MAX};
-// assuming that there won't be a whole lot of edges to a single vertex, we can
-// use linked lists to store inbound and outbounding edges
-// Because the application is not supposed to traverse the data we can simply us
-// memory-efficient linked lists
-
-struct LinkedList {
-    uint32_t value;
-    LinkedList *next;
-
-    explicit LinkedList(uint32_t v) : value(v), next(nullptr) {}
-};
-
-struct pair_hash {
-    template <class T1, class T2>
-    std::size_t operator()(const std::pair<T1, T2> &p) const {
-        auto h1 = std::hash<T1>{}(p.first);
-        auto h2 = std::hash<T2>{}(p.second);
-        return h1 ^ (h2 << 1);  // Combine hashes
-    }
-};
+#include "Data.h"
+#include "Structures.h"
 
 void print_menu() {
     const std::string Menu =
@@ -67,9 +61,10 @@ void choose_option(std::unordered_map<uint32_t, uint32_t *> &inbound,
                    std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t,
                                       pair_hash> &costs,
                    uint32_t &Vertices, uint32_t &Edges) {
-    int option;
+    int option = 0;
     std::string soption;
     while (!option) {
+        std::cin >> soption;
         try {
             option = std::stoi(soption);
         } catch (std::exception &e) {
@@ -77,129 +72,90 @@ void choose_option(std::unordered_map<uint32_t, uint32_t *> &inbound,
         }
     }
 
-    uint16_t remaining_operations = MAX_OPERATON_BUFFER;
     switch (option) {
         case 1:
             std::cout << Vertices << "\n";
             break;
 
-        case 2:
-            Edge arg_edges[MAX_OPERATON_BUFFER] = {NULL_EDGE};
+        case 2: {
+            uint16_t i = 0;
+            Edge arg_edges[MAX_OPERATON_BUFFER];
+            for (uint32_t k = 0; k <= MAX_OPERATON_BUFFER; k++)
+                arg_edges[k] = NULL_EDGE;
+            std::cout << "Input vertices between you want to check the "
+                         "existence of an edge\n";
+            std::string i1, i2;
+            int bl = 1;
+            while (bl) {
+                std::cin >> i1;
+                if (i1 == "confirm") {
+                    bl = false;
+                }
+                if (bl) {
+                    std::cin >> i2;
+                    Edge e;
+                    uint32_t a, b;
+                    a = s2i(i1);
+                    b = s2i(i2);
+                    if (a == UINT32_MAX || b == UINT32_MAX) continue;
+                    e.parent = a;
+                    e.child = b;
+                    arg_edges[i] = e;
+                    i++;
+                }
+            }
+
+            uint8_t *result = check_edges(arg_edges, outbound);
+
+            std::string found = "exists\n", nfound = "doesn't exist\n";
+            std::cout << result[0];
+            for (i = 1; i <= result[0]; i++) {
+                std::cout << "Edge " << arg_edges[i - 1].parent << " "
+                          << arg_edges[i - 1].child << " ";
+                if (result[i])
+                    std::cout << found;
+                else
+                    std::cout << nfound;
+            }
+            delete[] result;
             break;
+        }
+
+        case 3: {
+            uint16_t i = 0;
+            std::cout << "Insert the vertices for which you want to get the in "
+                         "and out degree for\n";
+            uint32_t arg_vertices[MAX_OPERATON_BUFFER];
+            std::fill(arg_vertices, arg_vertices + MAX_OPERATON_BUFFER,
+                      UINT32_MAX);
+            uint32_t v;
+            std::string sv;
+            while (true) {
+                std::cin >> sv;
+                if (sv == "confirm") {
+                    break;
+                }
+                v = s2i(sv);
+                if (v == UINT32_MAX) continue;
+                arg_vertices[i] = v;
+                i++;
+            }
+
+            uint32_t *indegree = get_degree(inbound, arg_vertices);
+            uint32_t *outdegree = get_degree(outbound, arg_vertices);
+            uint16_t sz = indegree[0];  // repurpose v to be size of lhe list of
+                                        // arg_vertices
+
+            for (i = 1; i <= sz; i++)
+                std::cout << "vertex " << arg_vertices[i - 1] << ": in degree "
+                          << indegree[i] << " | outdegree " << outdegree[i]
+                          << "\n";
+            delete[] indegree;
+            delete[] outdegree;
+            break;
+        }
     }
 }
-
-// A function that will read the specified file and load it into the
-// program
-void read_data(std::unordered_map<uint32_t, uint32_t *> &inbound,
-               std::unordered_map<uint32_t, uint32_t *> &outbound,
-               std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t,
-                                  pair_hash> &costs,
-               uint32_t &Vertices, uint32_t &Edges, char *filename,
-               uint32_t vertex_buffer) {
-    std::ifstream input(filename);
-    if (!input.is_open()) {
-        // Raise an error telling that the file was not opened
-        // succesfully
-        std::cerr << "Failed to open file " << filename << std::endl;
-        return;
-    }
-    std::cout << "File opened\n";
-
-    uint32_t vertices = 0, edges;
-    input >> vertices >> edges;
-    if (vertices == 0) {
-        // Raise an error telling that the file is empty
-        std::cerr << "The file is empty\n";
-        return;
-    }
-
-    uint16_t in_size[vertices] = {0};
-    uint16_t out_size[vertices] = {0};
-    // I don't expect very large out degrees so
-    // a 16 bit representation should suffice
-
-    std::vector<LinkedList *> outbound_Ll(vertices, nullptr);
-    std::vector<LinkedList *> inbound_Ll(vertices, nullptr);
-    // A list where the pointers to the linked lists will be stored
-
-    uint32_t parent, child, cost;  // Read all data and store it
-    std::cout << "Reading from file...\n";
-    LinkedList *outboundNode;
-    LinkedList *inboundNode;
-    for (uint32_t i = 0; i < edges; i++) {
-        input >> parent >> child >> cost;
-        // increase the out and in size
-        out_size[parent]++;
-        in_size[child]++;
-
-        // Add cost to the cost map
-        costs[{parent, child}] = cost;
-
-        // Add to outbound adjacency list (linked list per vertex)
-        outboundNode = new LinkedList(child);
-        outboundNode->next = outbound_Ll[parent];  // Insert at front of list
-        outbound_Ll[parent] = outboundNode;
-
-        // Add to inbound adjacency list (linked list per vertex)
-        inboundNode = new LinkedList(parent);
-        inboundNode->next = inbound_Ll[child];  // Insert at front of list
-        inbound_Ll[child] = inboundNode;
-    }
-
-    std::cout << parent << " " << child << " " << cost << "\n";
-
-    // after reading the data, store it in a in-out fast,
-    // memory-efficient way create arrays for outbound edges we will
-    // store in the first cell the size of the array
-    for (uint32_t i = 0; i < vertices; i++) {
-        uint32_t *out = reinterpret_cast<uint32_t *>(
-            malloc(sizeof(uint32_t) * (out_size[i] + 1 + vertex_buffer)));
-
-        LinkedList *node, *next;
-        node = outbound_Ll[i];
-        out[0] = out_size[i];
-        // check if the list is not empty <good practice>
-        if (node != nullptr) {
-            for (int j = 0; j < out_size[i]; j++) {
-                out[j + 1] =
-                    node->value;    // Store the value of the current node
-                next = node->next;  // Get the next node
-                delete node;        // Free the memory of the current node
-                node = next;        // Move to the next node in the list
-            }
-        }
-        outbound[i] = out;  // passing the pointer of the array to the map
-    }
-
-    // create arrays for inbound edges
-    for (uint32_t i = 0; i < vertices; i++) {
-        uint32_t *in = reinterpret_cast<uint32_t *>(
-            malloc(sizeof(uint32_t) * (in_size[i] + 1 + vertex_buffer)));
-
-        LinkedList *node, *next;
-        node = inbound_Ll[i];
-        in[0] = in_size[i];
-        // check if the list is not empty <good practice>
-        if (node != nullptr) {
-            for (int j = 0; j < in_size[i]; j++) {
-                in[j + 1] = node->value;  // Store the value of the current node
-                next = node->next;        // Get the next node
-                delete node;              // Free the memory of the current node
-                node = next;              // Move to the next node in the list
-            }
-        }
-        inbound[i] = in;  // passing the pointer of the array to the map
-    }
-
-    Vertices = vertices;
-    Edges = edges;
-    input.close();
-}
-
-void create_order() {
-
-};
 
 // TODO(Temeraire): free allocated memory used when initializing vectors
 int main(int argc, char **argv) {
@@ -224,6 +180,10 @@ int main(int argc, char **argv) {
     uint32_t vertices, edges;
     read_data(inbound, outbound, costs, vertices, edges, argv[1],
               vertex_buffer);
+    print_menu();
+    choose_option(inbound, outbound, costs, vertices, edges);
+
+    // ///////////////////END OF MAIN LOOP///////////////////////// //
 
     // Free dynamically allocated memory before exiting
     for (auto &entry : outbound) {
@@ -232,7 +192,6 @@ int main(int argc, char **argv) {
     for (auto &entry : inbound) {
         free(entry.second);
     }
-    print_menu();
     std::cout.flush();
 
     auto end_time = std::chrono::high_resolution_clock::now();
