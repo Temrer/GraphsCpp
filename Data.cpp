@@ -26,13 +26,16 @@
 // program
 #include <sys/types.h>
 
+#include <chrono>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <ostream>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "Structures.h"
@@ -92,13 +95,14 @@ void read_data(std::unordered_map<uint32_t, uint32_t *> &inbound,
         inboundNode = new LinkedList(parent);
         inboundNode->next = inbound_Ll[child];  // Insert at front of list
         inbound_Ll[child] = inboundNode;
+        if (parent < 2)
+            std::cout << parent << " " << child << " " << cost << "\n";
     }
-
-    std::cout << parent << " " << child << " " << cost << "\n";
 
     // after reading the data, store it in a in-out fast,
     // memory-efficient way create arrays for outbound edges we will
-    // store in the first cell the size of the array
+    // store in the first cell the size of the occupied array
+    // store in the cell after the remaining cells of the array
     for (uint32_t i = 0; i < vertices; i++) {
         uint32_t *out = reinterpret_cast<uint32_t *>(
             malloc(sizeof(uint32_t) * (out_size[i] + 1 + vertex_buffer)));
@@ -116,6 +120,7 @@ void read_data(std::unordered_map<uint32_t, uint32_t *> &inbound,
                 node = next;        // Move to the next node in the list
             }
         }
+        out[out_size[i] + 1] = vertex_buffer;
         outbound[i] = out;  // passing the pointer of the array to the map
     }
 
@@ -136,12 +141,14 @@ void read_data(std::unordered_map<uint32_t, uint32_t *> &inbound,
                 node = next;              // Move to the next node in the list
             }
         }
+        in[in_size[i] + 1] = vertex_buffer;
         inbound[i] = in;  // passing the pointer of the array to the map
     }
 
     Vertices = vertices;
     Edges = edges;
     input.close();
+    std::cout << "reading finished\n";
 }
 
 uint32_t s2i(std::string s) {
@@ -190,6 +197,7 @@ uint32_t *get_degree(std::unordered_map<uint32_t, uint32_t *> &map,
         if (current_vertex == UINT32_MAX) {
             result[0] = i;
             i = MAX_OPERATON_BUFFER;
+            continue;
         }
         if (map.find(current_vertex) == map.end()) {
             i++;
@@ -199,6 +207,103 @@ uint32_t *get_degree(std::unordered_map<uint32_t, uint32_t *> &map,
         result[i + 1] = deg;
         i++;
     }
-    std::cout << "\n";
     return result;
+}
+
+vertex_map *get_vertices_connections(
+    std::unordered_map<uint32_t, uint32_t *> &map, uint32_t *list_of_vertices) {
+    auto start_time1 = std::chrono::high_resolution_clock::now();
+    vertex_map *result = reinterpret_cast<vertex_map *>(
+        malloc(sizeof(vertex_map) * MAX_OPERATON_BUFFER + 1));
+    uint16_t i = 0;
+    while (i < MAX_OPERATON_BUFFER) {
+        uint32_t current_vertex = list_of_vertices[i];
+        if (current_vertex == UINT32_MAX) {
+            result[0] = vertex_map(i, nullptr);
+            i = MAX_OPERATON_BUFFER;
+        }
+        if (map.find(current_vertex) == map.end()) {
+            i++;
+            continue;
+        }
+        result[i + 1] = vertex_map(current_vertex, map[current_vertex]);
+        i++;
+    }
+    auto end_time1 = std::chrono::high_resolution_clock::now();
+    auto duration1 = std::chrono::duration_cast<std::chrono::milliseconds>(
+        end_time1 - start_time1);
+
+    std::cout << "IIProcess took " << duration1.count()
+              << " milliseconds to perform.\n";
+    return result;
+}
+
+uint16_t *get_weights_of_edges(
+    Edge *edges, std::unordered_map<uint32_t, uint32_t *> &outbound,
+    std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t, pair_hash>
+        &costs) {
+    uint16_t *result = new uint16_t[MAX_OPERATON_BUFFER + 1]{0}, sz = 0;
+
+    uint16_t i = 1;
+    while (true) {
+        uint32_t parent = edges[i - 1].parent, child = edges[i - 1].child;
+        auto asd = costs.find(std::make_pair(parent, child));
+        if (i == MAX_OPERATON_BUFFER ||
+            parent == NULL_EDGE.parent && child == NULL_EDGE.child) {
+            result[0] = sz;
+            return result;
+        }
+        if (costs.find(std::make_pair(parent, child)) == costs.end()) {
+            i++;
+            continue;
+        }
+        result[i] = costs[std::make_pair(parent, child)];
+        sz++;
+        i++;
+    }
+    return result;
+}
+
+void change_weights_of_edges(Edge *edges, uint16_t *newWeights,
+                             std::unordered_map<uint32_t, uint32_t *> &outbound,
+                             std::unordered_map<std::pair<uint32_t, uint32_t>,
+                                                uint32_t, pair_hash> &costs) {
+    uint16_t i = 1;
+    while (true) {
+        uint32_t parent = edges[i - 1].parent, child = edges[i - 1].child;
+        auto asd = costs.find(std::make_pair(parent, child));
+        if (i == MAX_OPERATON_BUFFER ||
+            parent == NULL_EDGE.parent && child == NULL_EDGE.child) {
+            return;
+        }
+        if (costs.find(std::make_pair(parent, child)) == costs.end()) {
+            i++;
+            continue;
+        }
+        costs[std::make_pair(parent, child)] = newWeights[i];
+        i++;
+    }
+}
+
+uint32_t *add_vertices(uint32_t *list_of_deleted, uint16_t number_of_new_edges,
+                       uint32_t vertex_buffer,
+                       std::unordered_map<uint32_t, uint32_t *> &outbound,
+                       std::unordered_map<uint32_t, uint32_t *> &inbound) {
+    uint32_t sz = list_of_deleted[0];
+    uint32_t max_vertex = list_of_deleted[sz + 1];
+    for (uint8_t i; i < number_of_new_edges; i++) {
+        if (sz > i) {
+            outbound[list_of_deleted[sz - i]] = reinterpret_cast<uint32_t *>(
+                malloc(sizeof(uint32_t) * vertex_buffer));
+
+            outbound[list_of_deleted[sz - i]] = reinterpret_cast<uint32_t *>(
+                malloc(sizeof(uint32_t) * vertex_buffer));
+            continue;
+        } else {
+            if (sz == i) {
+                list_of_deleted[0] = 0;
+                continue;
+            }
+        }
+    }
 }

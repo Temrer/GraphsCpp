@@ -99,4 +99,41 @@ uint8_t *check_edges(Edge *edges,
 uint32_t *get_degree(std::unordered_map<uint32_t, uint32_t *> &map,
                      uint32_t *list_of_vertices);
 
+/**
+ * @brief Retrieves the connection lists of a list of vertices.
+ *
+ * @param map The adjacency list map.
+ * @param list_of_vertices Pointer to the list of vertices.
+ * @return vertex_map* A dynamically allocated array containing degrees.
+ */
+vertex_map *get_vertices_connections(
+    std::unordered_map<uint32_t, uint32_t *> &map, uint32_t *list_of_vertices);
+
+/**
+ * @brief Retrieves the weights of a list of edges
+ * @param edges The list of edges to be checked
+ * @param outbound The map of the outbound adjacency list
+ * @param costs The map of edges containing the weights
+ * @return uint16_t* A dynamically allocated array containing the weights
+ */
+uint16_t *get_weights_of_edges(
+    Edge *edges, std::unordered_map<uint32_t, uint32_t *> &outbound,
+    std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t, pair_hash>
+        &costs);
+
+/**
+ * @brief Retrieves the weights of a list of edges
+ * @param edges The list of edges to be checked
+ * @param newWeights The list of the new weights to be applied (note: each
+ * element of newWeights should correspond directly to the element with the same
+ * index of *edges list)
+ * @param outbound The map of the outbound adjacency list
+ * @param costs The map of edges containing the weights
+ * @return uint16_t* A dynamically allocated array containing the weights
+ */
+void change_weights_of_edges(Edge *edges, uint16_t *newWeights,
+                             std::unordered_map<uint32_t, uint32_t *> &outbound,
+                             std::unordered_map<std::pair<uint32_t, uint32_t>,
+                                                uint32_t, pair_hash> &costs);
+
 #endif  // DATA_H_

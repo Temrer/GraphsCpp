@@ -1,3 +1,6 @@
+/Python
 /DataSets
 *.exe
 *.sh
+*.orig
+*.py

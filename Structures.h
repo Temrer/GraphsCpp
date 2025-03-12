@@ -73,5 +73,19 @@ struct pair_hash {
     }
 };
 
-#endif  // STRUCTURES_H_
+/**
+ * @brief A structure that allows a more advanced storing of vertices and their
+ *adjacency lists
+ */
+struct vertex_map {
+    uint32_t *list;   ///< Pointer to it's adjacency list
+    uint32_t vertex;  ///< The vertex
 
+    /**
+     * @brief Constructs a vertex_map ellement
+     * @param v The vertex
+     * @param l It's adjacency list
+     */
+    explicit vertex_map(uint32_t v, uint32_t *l) : vertex(v), list(l) {}
+};
+#endif  // STRUCTURES_H_

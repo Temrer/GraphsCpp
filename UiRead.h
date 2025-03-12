@@ -22,41 +22,17 @@
 // OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 // ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <cstddef>
+#ifndef UIREAD_H_
+#define UIREAD_H_
+
 #include <cstdint>
-#include <functional>
-#include <utility>
 
-struct Edge {
-    uint32_t parent;
-    uint32_t child;
-};
+#include "Structures.h"
 
-const Edge NULL_EDGE = {UINT32_MAX, UINT32_MAX};
-// assuming that there won't be a whole lot of edges to a single vertex, we can
-// use linked lists to store inbound and outbounding edges
-// Because the application is not supposed to traverse the data we can simply us
-// memory-efficient linked lists
+// @brief Carefull: need to free the returned memory
+Edge *read_edges();
 
-struct LinkedList {
-    uint32_t value;
-    LinkedList *next;
+// @brief Carefull: need to free the returned memory
+uint32_t *read_ints();
 
-    explicit LinkedList(uint32_t v) : value(v), next(nullptr) {}
-};
-
-struct pair_hash {
-    template <class T1, class T2>
-    std::size_t operator()(const std::pair<T1, T2> &p) const {
-        auto h1 = std::hash<T1>{}(p.first);
-        auto h2 = std::hash<T2>{}(p.second);
-        return h1 ^ (h2 << 1);  // Combine hashes
-    }
-};
-
-struct vertex_map {
-    uint32_t *list;
-    uint32_t vertex;
-
-    explicit vertex_map(uint32_t v, uint32_t *l) : vertex(v), list(l) {}
-};
+#endif  // UIREAD_H_
