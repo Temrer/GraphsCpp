@@ -38,6 +38,7 @@
 #include <utility>
 #include <vector>
 
+#include "IdManager.h"
 #include "Structures.h"
 #define MAX_OPERATON_BUFFER 100
 
@@ -46,7 +47,7 @@ void read_data(std::unordered_map<uint32_t, uint32_t *> &inbound,
                std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t,
                                   pair_hash> &costs,
                uint32_t &Vertices, uint32_t &Edges, char *filename,
-               uint32_t vertex_buffer) {
+               uint32_t vertex_buffer, IdManager &manager) {
     std::ifstream input(filename);
     if (!input.is_open()) {
         // Raise an error telling that the file was not opened
@@ -74,12 +75,15 @@ void read_data(std::unordered_map<uint32_t, uint32_t *> &inbound,
     // A list where the pointers to the linked lists will be stored
 
     uint32_t parent, child, cost;  // Read all data and store it
+    uint32_t iparent, ichild;      // Read all data and store it
     std::cout << "Reading from file...\n";
     LinkedList *outboundNode;
     LinkedList *inboundNode;
     for (uint32_t i = 0; i < edges; i++) {
-        input >> parent >> child >> cost;
+        input >> iparent >> ichild >> cost;
         // increase the out and in size
+        parent = get_id(manager, parent);
+        child = get_id(manager, child);
         out_size[parent]++;
         in_size[child]++;
 
@@ -143,6 +147,24 @@ void read_data(std::unordered_map<uint32_t, uint32_t *> &inbound,
         }
         in[in_size[i] + 1] = vertex_buffer;
         inbound[i] = in;  // passing the pointer of the array to the map
+    }
+
+    // initialise isolated vertices
+    for (uint32_t i = manager.map.size(); i < vertices; i++) {
+        uint32_t new_vertex = generate_id(manager);
+
+        uint32_t *out = reinterpret_cast<uint32_t *>(
+            malloc(sizeof(uint32_t) * (vertex_buffer + 1)));
+        uint32_t *in = reinterpret_cast<uint32_t *>(
+            malloc(sizeof(uint32_t) * (vertex_buffer + 1)));
+
+        out[vertex_buffer] = vertex_buffer;
+        in[vertex_buffer] = vertex_buffer;
+        in[0] = 0;  // No inbound edges initially
+        out[0] = 0;  // No outbound edges initially
+
+        outbound[new_vertex] = out;
+        inbound[new_vertex] = in;
     }
 
     Vertices = vertices;
@@ -249,7 +271,7 @@ uint16_t *get_weights_of_edges(
         uint32_t parent = edges[i - 1].parent, child = edges[i - 1].child;
         auto asd = costs.find(std::make_pair(parent, child));
         if (i == MAX_OPERATON_BUFFER ||
-            parent == NULL_EDGE.parent && child == NULL_EDGE.child) {
+            (parent == NULL_EDGE.parent && child == NULL_EDGE.child)) {
             result[0] = sz;
             return result;
         }
@@ -263,47 +285,102 @@ uint16_t *get_weights_of_edges(
     }
     return result;
 }
-
-void change_weights_of_edges(Edge *edges, uint16_t *newWeights,
+void change_weights_of_edges(Edge *edges, uint32_t *weights,
                              std::unordered_map<uint32_t, uint32_t *> &outbound,
                              std::unordered_map<std::pair<uint32_t, uint32_t>,
                                                 uint32_t, pair_hash> &costs) {
-    uint16_t i = 1;
-    while (true) {
-        uint32_t parent = edges[i - 1].parent, child = edges[i - 1].child;
-        auto asd = costs.find(std::make_pair(parent, child));
-        if (i == MAX_OPERATON_BUFFER ||
-            parent == NULL_EDGE.parent && child == NULL_EDGE.child) {
-            return;
-        }
+    uint16_t i = 0;
+
+    while (i < MAX_OPERATON_BUFFER) {
+        uint32_t parent = edges[i].parent, child = edges[i].child;
+        if (parent == NULL_EDGE.parent && child == NULL_EDGE.child) return;
         if (costs.find(std::make_pair(parent, child)) == costs.end()) {
             i++;
             continue;
         }
-        costs[std::make_pair(parent, child)] = newWeights[i];
+        costs[std::make_pair(parent, child)] = weights[i];
         i++;
     }
+    return;
 }
 
-uint32_t *add_vertices(uint32_t *list_of_deleted, uint16_t number_of_new_edges,
-                       uint32_t vertex_buffer,
+uint32_t *add_vertices(uint32_t number_of_vertices, IdManager &manager,
+                       uint16_t vertex_buffer,
                        std::unordered_map<uint32_t, uint32_t *> &outbound,
                        std::unordered_map<uint32_t, uint32_t *> &inbound) {
-    uint32_t sz = list_of_deleted[0];
-    uint32_t max_vertex = list_of_deleted[sz + 1];
-    for (uint8_t i; i < number_of_new_edges; i++) {
-        if (sz > i) {
-            outbound[list_of_deleted[sz - i]] = reinterpret_cast<uint32_t *>(
-                malloc(sizeof(uint32_t) * vertex_buffer));
+    uint32_t *result = reinterpret_cast<uint32_t *>(
+        malloc(sizeof(uint32_t) * (number_of_vertices + 1)));
+    result[0] = number_of_vertices;  // Store the count of added vertices
 
-            outbound[list_of_deleted[sz - i]] = reinterpret_cast<uint32_t *>(
-                malloc(sizeof(uint32_t) * vertex_buffer));
-            continue;
-        } else {
-            if (sz == i) {
-                list_of_deleted[0] = 0;
-                continue;
-            }
-        }
+    for (uint32_t i = 0; i < number_of_vertices; i++) {
+        uint32_t new_vertex = generate_id(manager);
+        result[i + 1] = new_vertex;
+
+        uint32_t *out = reinterpret_cast<uint32_t *>(
+            malloc(sizeof(uint32_t) * (vertex_buffer + 1)));
+        uint32_t *in = reinterpret_cast<uint32_t *>(
+            malloc(sizeof(uint32_t) * (vertex_buffer + 1)));
+
+        out[0] = 0;  // No outbound edges initially
+        out[vertex_buffer] = vertex_buffer;
+        in[0] = 0;  // No inbound edges initially
+        in[vertex_buffer] = vertex_buffer;
+
+        outbound[new_vertex] = out;
+        inbound[new_vertex] = in;
     }
+    return result;
+}
+
+uint32_t *remove_vertices(uint32_t *list_of_vertices, IdManager &manager,
+                          std::unordered_map<uint32_t, uint32_t *> &outbound,
+                          std::unordered_map<uint32_t, uint32_t *> &inbound,
+                          std::unordered_map<std::pair<uint32_t, uint32_t>,
+                                             uint32_t, pair_hash> &costs) {
+    uint32_t *result = reinterpret_cast<uint32_t *>(
+        malloc(sizeof(uint32_t) * (MAX_OPERATON_BUFFER + 1)));
+    result[0] = 0;  // Store the count of removed vertices
+
+    for (uint32_t i = 0; i < MAX_OPERATON_BUFFER; i++) {
+        uint32_t vertex = list_of_vertices[i];
+        if (vertex == UINT32_MAX) break;
+
+        if (outbound.find(vertex) == outbound.end()) continue;
+
+        uint32_t *out_list = outbound[vertex];
+        for (uint32_t j = 1; j <= out_list[0]; j++) {
+            uint32_t child = out_list[j];
+
+            uint32_t *in_list = inbound[child];
+            for (uint32_t k = 1; k <= in_list[0]; k++) {
+                if (in_list[k] == vertex) {
+                    in_list[k] = in_list[in_list[0]--];
+                    break;
+                }
+            }
+
+            costs.erase({vertex, child});
+        }
+        free(out_list);
+        outbound.erase(vertex);
+
+        uint32_t *in_list = inbound[vertex];
+        for (uint32_t j = 1; j <= in_list[0]; j++) {
+            uint32_t parent = in_list[j];
+
+            uint32_t *out_list = outbound[parent];
+            for (uint32_t k = 1; k <= out_list[0]; k++) {
+                if (out_list[k] == vertex) {
+                    out_list[k] = out_list[out_list[0]--];
+                    break;
+                }
+            }
+            costs.erase({parent, vertex});
+        }
+        free(in_list);
+        inbound.erase(vertex);
+        remove_id(manager, vertex);
+        result[++result[0]] = vertex;
+    }
+    return result;
 }

@@ -57,7 +57,7 @@ void read_data(std::unordered_map<uint32_t, uint32_t *> &inbound,
                std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t,
                                   pair_hash> &costs,
                uint32_t &Vertices, uint32_t &Edges, char *filename,
-               uint32_t vertex_buffer);
+               uint32_t vertex_buffer, IdManager &manager);
 
 /**
  * @brief Converts a string to an unsigned 32-bit integer.
@@ -125,15 +125,25 @@ uint16_t *get_weights_of_edges(
  * @brief Retrieves the weights of a list of edges
  * @param edges The list of edges to be checked
  * @param newWeights The list of the new weights to be applied (note: each
- * element of newWeights should correspond directly to the element with the same
- * index of *edges list)
+ * element of newWeights should correspond directly to the element with the
+ * same index of *edges list)
  * @param outbound The map of the outbound adjacency list
  * @param costs The map of edges containing the weights
  * @return uint16_t* A dynamically allocated array containing the weights
  */
-void change_weights_of_edges(Edge *edges, uint16_t *newWeights,
+void change_weights_of_edges(Edge *edges, uint32_t *weights,
                              std::unordered_map<uint32_t, uint32_t *> &outbound,
                              std::unordered_map<std::pair<uint32_t, uint32_t>,
                                                 uint32_t, pair_hash> &costs);
 
+uint32_t *add_vertices(uint32_t number_of_vertices, IdManager &manager,
+                       uint16_t vertex_buffer,
+                       std::unordered_map<uint32_t, uint32_t *> &outbound,
+                       std::unordered_map<uint32_t, uint32_t *> &inbound);
+
+uint32_t *remove_vertices(uint32_t *list_of_vertices, IdManager &manager,
+                          std::unordered_map<uint32_t, uint32_t *> &outbound,
+                          std::unordered_map<uint32_t, uint32_t *> &inbound,
+                          std::unordered_map<std::pair<uint32_t, uint32_t>,
+                                             uint32_t, pair_hash> &costs);
 #endif  // DATA_H_

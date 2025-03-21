@@ -65,7 +65,8 @@ int choose_option(std::unordered_map<uint32_t, uint32_t *> &inbound,
                   std::unordered_map<uint32_t, uint32_t *> &outbound,
                   std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t,
                                      pair_hash> &costs,
-                  uint32_t &Vertices, uint32_t &Edges, uint32_t vertex_buffer) {
+                  IdManager &manager, uint32_t &Vertices, uint32_t &Edges,
+                  uint32_t vertex_buffer) {
     int option = 0;
     std::string soption;
     while (!option) {
@@ -109,6 +110,14 @@ int choose_option(std::unordered_map<uint32_t, uint32_t *> &inbound,
             opt7(outbound, costs);
             break;
         }
+        case 8: {
+            opt8(outbound, inbound, manager, vertex_buffer);
+            break;
+        }
+        case 9: {
+            opt9(outbound, inbound, costs, manager);
+            break;
+        }
     }
     return 0;
 }
@@ -132,6 +141,7 @@ int main(int argc, char **argv) {
     std::unordered_map<uint32_t, uint32_t *> outbound;
     std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t, pair_hash>
         costs;
+    IdManager id_manager;
 
     uint32_t vertices, edges;
     int ccond = 0;
@@ -151,11 +161,11 @@ int main(int argc, char **argv) {
     // /////////////////////////////////////////////////////////////////
 
     read_data(inbound, outbound, costs, vertices, edges, argv[1],
-              vertex_buffer);
+              vertex_buffer, id_manager);
     while (!ccond) {
         print_menu();
-        ccond = choose_option(inbound, outbound, costs, vertices, edges,
-                              vertex_buffer);
+        ccond = choose_option(inbound, outbound, costs, id_manager, vertices,
+                              edges, vertex_buffer);
     }
 
     // /////////////////////////////////////////////////////////////////

@@ -27,7 +27,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <unordered_map>
 #include <utility>
+#include <vector>
 
 /**
  * @brief Represents an edge in a graph.
@@ -87,5 +89,11 @@ struct vertex_map {
      * @param l It's adjacency list
      */
     explicit vertex_map(uint32_t v, uint32_t *l) : vertex(v), list(l) {}
+};
+
+struct IdManager {
+    std::unordered_map<uint32_t, uint32_t> map;
+    std::vector<uint32_t> unused_ids;
+    uint32_t max_vertex=0;
 };
 #endif  // STRUCTURES_H_

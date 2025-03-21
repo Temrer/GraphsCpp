@@ -22,10 +22,12 @@
 // OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 // ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <algorithm>
 #include <cstdint>
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <unordered_map>
 
 #include "Data.h"
 #include "Structures.h"
@@ -35,8 +37,7 @@ Edge *read_edges() {
     uint16_t i = 0;
     Edge *arg_edges =
         reinterpret_cast<Edge *>(malloc(sizeof(Edge) * MAX_OPERATON_BUFFER));
-    for (uint32_t k = 0; k <= MAX_OPERATON_BUFFER; k++)
-        arg_edges[k] = NULL_EDGE;
+    for (uint32_t k = 0; k < MAX_OPERATON_BUFFER; k++) arg_edges[k] = NULL_EDGE;
     std::string i1, i2;
     int bl = 1;
     while (bl) {
@@ -185,18 +186,71 @@ void opt7(std::unordered_map<uint32_t, uint32_t *> &outbound,
               &costs) {
     std::cout << "Input vertices between which you want to change the weight "
                  "of the edge\n";
-    Edge *arg_edges = read_edges();
-    uint16_t weights[MAX_OPERATON_BUFFER] = {0};
-    std::string i3;
-
-    for (uint16_t i = 0; arg_edges[i].parent != UINT32_MAX; i++) {
-        std::cin >> i3;
-        uint32_t c1 = s2i(i3);
-        if (c1 == UINT32_MAX) continue;
-        weights[i] = (uint16_t)c1;
+    std::string i1, i2, i3;
+    uint32_t weights[MAX_OPERATON_BUFFER];
+    Edge arg_edges[MAX_OPERATON_BUFFER];
+    std::fill(arg_edges, arg_edges + MAX_OPERATON_BUFFER, NULL_EDGE);
+    uint16_t i = 0;
+    int bl = 1;
+    while (bl && i < MAX_OPERATON_BUFFER) {
+        std::cin >> i1;
+        if (i1 == "confirm") {
+            bl = 0;
+        }
+        if (bl) {
+            std::cin >> i2 >> i3;
+            Edge e;
+            uint32_t a, b, c1;
+            a = s2i(i1);
+            b = s2i(i2);
+            c1 = s2i(i3);
+            if (a == UINT32_MAX || b == UINT32_MAX || c1 == UINT32_MAX)
+                continue;
+            weights[i] = (uint16_t)c1;
+            e.parent = a;
+            e.child = b;
+            arg_edges[i] = e;
+            i++;
+        }
     }
 
     change_weights_of_edges(arg_edges, weights, outbound, costs);
+}
 
-    free(arg_edges);
+void opt8(std::unordered_map<uint32_t, uint32_t *> &outbound,
+          std::unordered_map<uint32_t, uint32_t *> &inbound, IdManager &manager,
+          uint16_t vertex_buffer) {
+    std::cout << "Insert the number of vertices you want to add\n";
+    uint32_t v = UINT32_MAX;
+    while (v == UINT32_MAX) {
+        std::string v1;
+        std::cin >> v1;
+        v = s2i(v1);
+    }
+    uint32_t *result =
+        add_vertices(v, manager, vertex_buffer, outbound, inbound);
+    std::cout << "Added vertices: ";
+    for (uint16_t i = 1; i <= result[0]; i++) std::cout << result[i] << " ";
+    std::cout << "\n";
+
+    free(result);
+}
+
+void opt9(std::unordered_map<uint32_t, uint32_t *> &outbound,
+          std::unordered_map<uint32_t, uint32_t *> &inbound,
+          std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t, pair_hash>
+              &costs,
+          IdManager &manager) {
+    std::cout << "Insert the vertices you want to remove\n";
+    uint32_t *arg_vertices = read_ints();
+
+    uint32_t *result =
+        remove_vertices(arg_vertices, manager, outbound, inbound, costs);
+
+    std::cout << "Removed vertices: ";
+    for (uint16_t i = 1; i <= result[0]; i++) std::cout << result[i] << " ";
+    std::cout << "\n";
+
+    free(arg_vertices);
+    free(result);
 }
