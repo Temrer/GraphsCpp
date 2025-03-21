@@ -36,6 +36,7 @@
 
 #include "Data.h"
 #include "Structures.h"
+#include "UiRead.h"
 
 void print_menu() {
     const std::string Menu =
@@ -83,173 +84,29 @@ int choose_option(std::unordered_map<uint32_t, uint32_t *> &inbound,
             break;
 
         case 2: {
-    break;
+            opt2(outbound);
+            break;
         }
 
         case 3: {
-
-            uint32_t *indegree = get_degree(inbound, arg_vertices);
-            uint32_t *outdegree = get_degree(outbound, arg_vertices);
-            uint16_t sz = indegree[0];  // repurpose v to be size of lhe
-                                        // list of arg_vertices
-
-            for (i = 1; i <= sz; i++)
-                std::cout << "vertex " << arg_vertices[i - 1] << ": in degree "
-                          << indegree[i] << " | outdegree " << outdegree[i]
-                          << "\n";
-            delete[] indegree;
-            delete[] outdegree;
+            opt3(outbound, inbound);
             break;
         }
 
         case 4: {
-            uint16_t i = 0;
-            std::cout << "Insert the vertices for which you want to get the "
-                         "out connections for\n";
-            uint32_t arg_vertices[MAX_OPERATON_BUFFER];
-            std::fill(arg_vertices, arg_vertices + MAX_OPERATON_BUFFER,
-                      UINT32_MAX);
-            uint32_t v;
-            std::string sv;
-            while (true) {
-                std::cin >> sv;
-                if (sv == "confirm") {
-                    break;
-                }
-                v = s2i(sv);
-                if (v == UINT32_MAX) continue;
-                arg_vertices[i] = v;
-                i++;
-            }
-
-            vertex_map *indegree =
-                get_vertices_connections(outbound, arg_vertices);
-            uint16_t sz =
-                (uint16_t)indegree[0].vertex;  // repurpose v to be size of lhe
-                                               // list of arg_vertices
-
-            for (i = 1; i <= sz; i++) {
-                uint32_t *list = indegree[i].list;
-                uint32_t sz1 = list[0];
-                std::cout << indegree[i].vertex
-                          << " is connected outwards to: ";
-                for (int j = 1; j <= sz1; j++) std::cout << list[j] << " ";
-                std::cout << std::endl;
-            }
-
-            free(indegree);
+            opt4(outbound);
             break;
         }
         case 5: {
-            uint16_t i = 0;
-            std::cout << "Insert the vertices for which you want to get the "
-                         "in connections for\n";
-            uint32_t arg_vertices[MAX_OPERATON_BUFFER];
-            std::fill(arg_vertices, arg_vertices + MAX_OPERATON_BUFFER,
-                      UINT32_MAX);
-            uint32_t v;
-            std::string sv;
-            while (true) {
-                std::cin >> sv;
-                if (sv == "confirm") {
-                    break;
-                }
-                v = s2i(sv);
-                if (v == UINT32_MAX) continue;
-                arg_vertices[i] = v;
-                i++;
-            }
-
-            vertex_map *indegree =
-                get_vertices_connections(inbound, arg_vertices);
-            uint16_t sz =
-                (uint16_t)indegree[0].vertex;  // repurpose v to be size of lhe
-                                               // list of arg_vertices
-
-            for (i = 1; i <= sz; i++) {
-                uint32_t *list = indegree[i].list;
-                uint32_t sz1 = list[0];
-                std::cout << indegree[i].vertex << " is connected inwards to: ";
-                for (int j = 1; j <= sz1; j++) std::cout << list[j] << " ";
-                std::cout << std::endl;
-            }
-
-            free(indegree);
+            opt5(inbound);
             break;
         }
         case 6: {
-            uint16_t i = 0;
-            Edge arg_edges[MAX_OPERATON_BUFFER];
-            for (uint32_t k = 0; k <= MAX_OPERATON_BUFFER; k++)
-                arg_edges[k] = NULL_EDGE;
-            std::cout << "Input vertices between you want to check the "
-                         "weight of the edge\n";
-            std::string i1, i2;
-            int bl = 1;
-            while (bl) {
-                std::cin >> i1;
-                if (i1 == "confirm") {
-                    bl = false;
-                }
-                if (bl) {
-                    std::cin >> i2;
-                    Edge e;
-                    uint32_t a, b;
-                    a = s2i(i1);
-                    b = s2i(i2);
-                    if (a == UINT32_MAX || b == UINT32_MAX) continue;
-                    e.parent = a;
-                    e.child = b;
-                    arg_edges[i] = e;
-                    i++;
-                }
-            }
-
-            uint16_t *result = get_weights_of_edges(arg_edges, outbound, costs);
-
-            uint16_t sz = result[0];
-            for (i = 0; i < sz; i++) {
-                std::cout << "The weight of the edge (" << arg_edges[i].parent
-                          << ", " << arg_edges[i].child
-                          << ") is: " << result[i + 1] << "\n";
-            }
-            delete[] result;
+            opt6(outbound, costs);
             break;
         }
         case 7: {
-            uint16_t i = 0;
-            Edge arg_edges[MAX_OPERATON_BUFFER];
-            for (uint32_t k = 0; k <= MAX_OPERATON_BUFFER; k++)
-                arg_edges[k] = NULL_EDGE;
-
-            uint16_t weights[MAX_OPERATON_BUFFER] = {0};
-            std::cout << "Input vertices between you want to change the "
-                         "weight of the edge\n";
-            std::string i1, i2, i3;
-            int bl = 1;
-            while (bl) {
-                std::cin >> i1;
-                if (i1 == "confirm") {
-                    bl = false;
-                }
-                if (bl) {
-                    std::cin >> i2 >> i3;
-                    Edge e;
-                    uint32_t a, b, c1;
-                    a = s2i(i1);
-                    b = s2i(i2);
-                    c1 = s2i(i3);
-                    if (a == UINT32_MAX || b == UINT32_MAX || c1 == UINT32_MAX)
-                        continue;
-                    weights[i] = (uint16_t)c1;
-                    e.parent = a;
-                    e.child = b;
-                    arg_edges[i] = e;
-                    i++;
-                }
-            }
-
-            change_weights_of_edges(arg_edges, weights, outbound, costs);
+            opt7(outbound, costs);
             break;
         }
     }

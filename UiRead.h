@@ -35,4 +35,21 @@ Edge *read_edges();
 // @brief Carefull: need to free the returned memory
 uint32_t *read_ints();
 
+void opt2(std::unordered_map<uint32_t, uint32_t *> &outbound);
+
+void opt3(std::unordered_map<uint32_t, uint32_t *> &outbound,
+          std::unordered_map<uint32_t, uint32_t *> &inbound);
+
+void opt4(std::unordered_map<uint32_t, uint32_t *> &outbound);
+
+void opt5(std::unordered_map<uint32_t, uint32_t *> &inbound);
+
+void opt6(std::unordered_map<uint32_t, uint32_t *> &outbound,
+          std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t, pair_hash>
+              &costs);
+
+void opt7(std::unordered_map<uint32_t, uint32_t *> &outbound,
+          std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t, pair_hash>
+              &costs);
+
 #endif  // UIREAD_H_

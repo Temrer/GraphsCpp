@@ -102,16 +102,101 @@ void opt2(std::unordered_map<uint32_t, uint32_t *> &outbound) {
     delete[] result;
 }
 
-void opt3(std::unordered_map<uint32_t, uint32_t *> &map) {
-    std::cout << "Insert the vertices for which you want to get the in "
-                 "and out degree for\n";
+void opt3(std::unordered_map<uint32_t, uint32_t *> &outbound,
+          std::unordered_map<uint32_t, uint32_t *> &inbound) {
+    std::cout << "Insert the vertices for which you want to get the in and out "
+                 "degrees\n";
     uint32_t *arg_vertices = read_ints();
-    uint32_t *result = get_degree(map, arg_vertices);
+    uint32_t *out_degrees = get_degree(outbound, arg_vertices);
+    uint32_t *in_degrees = get_degree(inbound, arg_vertices);
+
     std::cout << "Degrees:\n";
-    for (uint16_t i = 1; i <= result[0]; i++) {
-        std::cout << "Vertex " << arg_vertices[i - 1] << " has degree "
-                  << result[i] << "\n";
+    for (uint16_t i = 1; i <= out_degrees[0]; i++) {
+        std::cout << "Vertex " << arg_vertices[i - 1] << " has out-degree "
+                  << out_degrees[i] << " and in-degree " << in_degrees[i]
+                  << "\n";
     }
+
     free(arg_vertices);
+    delete[] out_degrees;
+    delete[] in_degrees;
+}
+
+void opt4(std::unordered_map<uint32_t, uint32_t *> &outbound) {
+    std::cout << "Insert the vertices for which you want to get the out "
+                 "connections for\n";
+    uint32_t *arg_vertices = read_ints();
+
+    vertex_map *outdegree = get_vertices_connections(outbound, arg_vertices);
+    uint16_t sz = (uint16_t)outdegree[0].vertex;
+
+    for (uint16_t i = 1; i <= sz; i++) {
+        uint32_t *list = outdegree[i].list;
+        uint32_t sz1 = list[0];
+        std::cout << outdegree[i].vertex << " is connected outwards to: ";
+        for (uint16_t j = 1; j <= sz1; j++) std::cout << list[j] << " ";
+        std::cout << std::endl;
+    }
+
+    free(outdegree);
+    free(arg_vertices);
+}
+
+void opt5(std::unordered_map<uint32_t, uint32_t *> &inbound) {
+    std::cout << "Insert the vertices for which you want to get the in "
+                 "connections for\n";
+    uint32_t *arg_vertices = read_ints();
+
+    vertex_map *indegree = get_vertices_connections(inbound, arg_vertices);
+    uint16_t sz = (uint16_t)indegree[0].vertex;
+
+    for (uint16_t i = 1; i <= sz; i++) {
+        uint32_t *list = indegree[i].list;
+        uint32_t sz1 = list[0];
+        std::cout << indegree[i].vertex << " is connected inwards to: ";
+        for (uint16_t j = 1; j <= sz1; j++) std::cout << list[j] << " ";
+        std::cout << std::endl;
+    }
+
+    free(indegree);
+    free(arg_vertices);
+}
+
+void opt6(std::unordered_map<uint32_t, uint32_t *> &outbound,
+          std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t, pair_hash>
+              &costs) {
+    std::cout << "Input vertices between which you want to check the weight of "
+                 "the edge\n";
+    Edge *arg_edges = read_edges();
+
+    uint16_t *result = get_weights_of_edges(arg_edges, outbound, costs);
+    uint16_t sz = result[0];
+    for (uint16_t i = 0; i < sz; i++) {
+        std::cout << "The weight of the edge (" << arg_edges[i].parent << ", "
+                  << arg_edges[i].child << ") is: " << result[i + 1] << "\n";
+    }
+
+    free(arg_edges);
     delete[] result;
+}
+
+void opt7(std::unordered_map<uint32_t, uint32_t *> &outbound,
+          std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t, pair_hash>
+              &costs) {
+    std::cout << "Input vertices between which you want to change the weight "
+                 "of the edge\n";
+    Edge *arg_edges = read_edges();
+    uint16_t weights[MAX_OPERATON_BUFFER] = {0};
+    std::string i3;
+
+    for (uint16_t i = 0; arg_edges[i].parent != UINT32_MAX; i++) {
+        std::cin >> i3;
+        uint32_t c1 = s2i(i3);
+        if (c1 == UINT32_MAX) continue;
+        weights[i] = (uint16_t)c1;
+    }
+
+    change_weights_of_edges(arg_edges, weights, outbound, costs);
+
+    free(arg_edges);
 }
