@@ -82,8 +82,8 @@ void read_data(std::unordered_map<uint32_t, uint32_t *> &inbound,
     for (uint32_t i = 0; i < edges; i++) {
         input >> iparent >> ichild >> cost;
         // increase the out and in size
-        parent = get_id(manager, parent);
-        child = get_id(manager, child);
+        parent = get_id(manager, iparent);
+        child = get_id(manager, ichild);
         out_size[parent]++;
         in_size[child]++;
 
@@ -160,7 +160,7 @@ void read_data(std::unordered_map<uint32_t, uint32_t *> &inbound,
 
         out[vertex_buffer] = vertex_buffer;
         in[vertex_buffer] = vertex_buffer;
-        in[0] = 0;  // No inbound edges initially
+        in[0] = 0;   // No inbound edges initially
         out[0] = 0;  // No outbound edges initially
 
         outbound[new_vertex] = out;

@@ -5,10 +5,12 @@
 uint32_t get_id(IdManager &manager, uint32_t vertex) {
     if (manager.map.find(vertex) == manager.map.end()) {
         if (manager.unused_ids.size() == 0) {
+            manager.map[vertex] = manager.max_vertex;
             manager.max_vertex++;
             return manager.max_vertex - 1;
         }
         uint32_t id = manager.unused_ids.back();
+        manager.map[vertex] = id;
         manager.unused_ids.pop_back();
         return id;
     }

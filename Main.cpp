@@ -111,11 +111,11 @@ int choose_option(std::unordered_map<uint32_t, uint32_t *> &inbound,
             break;
         }
         case 8: {
-            opt8(outbound, inbound, manager, vertex_buffer);
+            opt8(outbound, inbound, manager, vertex_buffer, Vertices);
             break;
         }
         case 9: {
-            opt9(outbound, inbound, costs, manager);
+            opt9(outbound, inbound, costs, manager, Vertices);
             break;
         }
     }
@@ -160,8 +160,10 @@ int main(int argc, char **argv) {
     // Start main loop /////////////////////////////////////////////////
     // /////////////////////////////////////////////////////////////////
 
-    read_data(inbound, outbound, costs, vertices, edges, argv[1],
-              vertex_buffer, id_manager);
+    int a;
+    std::cin >> a;
+    read_data(inbound, outbound, costs, vertices, edges, argv[1], vertex_buffer,
+              id_manager);
     while (!ccond) {
         print_menu();
         ccond = choose_option(inbound, outbound, costs, id_manager, vertices,

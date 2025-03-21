@@ -54,11 +54,11 @@ void opt7(std::unordered_map<uint32_t, uint32_t *> &outbound,
 
 void opt8(std::unordered_map<uint32_t, uint32_t *> &outbound,
           std::unordered_map<uint32_t, uint32_t *> &inbound, IdManager &manager,
-          uint16_t vertex_buffer) ;
+          uint16_t vertex_buffer, uint32_t &Vertices);
 
 void opt9(std::unordered_map<uint32_t, uint32_t *> &outbound,
           std::unordered_map<uint32_t, uint32_t *> &inbound,
           std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t, pair_hash>
               &costs,
-          IdManager &manager) ;
+          IdManager &manager, uint32_t &Vertices);
 #endif  // UIREAD_H_

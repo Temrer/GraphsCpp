@@ -219,7 +219,7 @@ void opt7(std::unordered_map<uint32_t, uint32_t *> &outbound,
 
 void opt8(std::unordered_map<uint32_t, uint32_t *> &outbound,
           std::unordered_map<uint32_t, uint32_t *> &inbound, IdManager &manager,
-          uint16_t vertex_buffer) {
+          uint16_t vertex_buffer, uint32_t &Vertices) {
     std::cout << "Insert the number of vertices you want to add\n";
     uint32_t v = UINT32_MAX;
     while (v == UINT32_MAX) {
@@ -232,6 +232,7 @@ void opt8(std::unordered_map<uint32_t, uint32_t *> &outbound,
     std::cout << "Added vertices: ";
     for (uint16_t i = 1; i <= result[0]; i++) std::cout << result[i] << " ";
     std::cout << "\n";
+    Vertices += result[0];
 
     free(result);
 }
@@ -240,7 +241,7 @@ void opt9(std::unordered_map<uint32_t, uint32_t *> &outbound,
           std::unordered_map<uint32_t, uint32_t *> &inbound,
           std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t, pair_hash>
               &costs,
-          IdManager &manager) {
+          IdManager &manager, uint32_t &Vertices) {
     std::cout << "Insert the vertices you want to remove\n";
     uint32_t *arg_vertices = read_ints();
 
@@ -251,6 +252,7 @@ void opt9(std::unordered_map<uint32_t, uint32_t *> &outbound,
     for (uint16_t i = 1; i <= result[0]; i++) std::cout << result[i] << " ";
     std::cout << "\n";
 
+    Vertices -= result[0];
     free(arg_vertices);
     free(result);
 }
