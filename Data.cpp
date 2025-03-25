@@ -48,6 +48,7 @@ void read_data(std::unordered_map<uint32_t, uint32_t *> &inbound,
                                   pair_hash> &costs,
                uint32_t &Vertices, uint32_t &Edges, char *filename,
                uint32_t vertex_buffer, IdManager &manager) {
+    auto start_time = std::chrono::high_resolution_clock::now();
     std::ifstream input(filename);
     if (!input.is_open()) {
         // Raise an error telling that the file was not opened
@@ -99,8 +100,6 @@ void read_data(std::unordered_map<uint32_t, uint32_t *> &inbound,
         inboundNode = new LinkedList(parent);
         inboundNode->next = inbound_Ll[child];  // Insert at front of list
         inbound_Ll[child] = inboundNode;
-        if (parent < 2)
-            std::cout << parent << " " << child << " " << cost << "\n";
     }
 
     // after reading the data, store it in a in-out fast,
@@ -171,6 +170,39 @@ void read_data(std::unordered_map<uint32_t, uint32_t *> &inbound,
     Edges = edges;
     input.close();
     std::cout << "reading finished\n";
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+        end_time - start_time);
+
+    std::cout << "Read took " << duration.count()
+              << " milliseconds to perform.\n";
+}
+
+void write_data(std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t,
+                                   pair_hash> &costs,
+                uint32_t Vertices, uint32_t Edges, std::string filename) {
+    std::ofstream output(filename);
+
+    if (!output.is_open()) {
+        // Raise an error telling that the file was not opened
+        // succesfully
+        std::cerr << "Failed to open file " << filename << std::endl;
+        return;
+    }
+
+    output << Vertices << " " << Edges << "\n";
+    auto it = costs.begin();
+    while (it != costs.end()) {
+        uint32_t parent, child, weight;
+        parent = it->first.first;
+        child = it->first.second;
+        weight = it->second;
+
+        output << parent << " " << child << " " << weight << "\n";
+        it++;
+    }
+    output.close();
+    std::cout << "Write finished\n";
 }
 
 uint32_t s2i(std::string s) {

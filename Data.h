@@ -59,6 +59,10 @@ void read_data(std::unordered_map<uint32_t, uint32_t *> &inbound,
                uint32_t &Vertices, uint32_t &Edges, char *filename,
                uint32_t vertex_buffer, IdManager &manager);
 
+void write_data(std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t,
+                                   pair_hash> &costs,
+                uint32_t Vertices, uint32_t Edges, std::string filename);
+
 /**
  * @brief Converts a string to an unsigned 32-bit integer.
  *

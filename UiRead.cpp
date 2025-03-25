@@ -22,9 +22,12 @@
 // OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 // ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <stdio.h>
+
 #include <algorithm>
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <string>
 #include <unordered_map>
@@ -79,6 +82,15 @@ uint32_t *read_ints() {
         i++;
     }
     return arg_vertices;
+}
+
+int file_exists(const char *filename) {
+    FILE *file = fopen(filename, "r");
+    if (file) {
+        fclose(file);
+        return 1;  // File exists
+    }
+    return 0;  // File does not exist
 }
 
 void opt2(std::unordered_map<uint32_t, uint32_t *> &outbound) {
@@ -257,7 +269,7 @@ void opt9(std::unordered_map<uint32_t, uint32_t *> &outbound,
     free(result);
 }
 
-void opt10(uint16_t vertex_buffer,
+void opt10(uint16_t vertex_buffer, uint32_t &Edges,
            std::unordered_map<uint32_t, uint32_t *> &outbound,
            std::unordered_map<uint32_t, uint32_t *> &inbound,
            std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t,
@@ -305,12 +317,14 @@ void opt10(uint16_t vertex_buffer,
                   << weights[i - 1] << "\n";
     }
 
+    Edges += result[0];
+
     delete[] weights;
     delete[] arg_edges;
     delete[] result;
 }
 
-void opt11(uint16_t vertex_buffer,
+void opt11(uint16_t vertex_buffer, uint32_t &Edges,
            std::unordered_map<uint32_t, uint32_t *> &outbound,
            std::unordered_map<uint32_t, uint32_t *> &inbound,
            std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t,
@@ -329,6 +343,32 @@ void opt11(uint16_t vertex_buffer,
                   << arg_edges[i - 1].child << ")\n";
     }
 
+    Edges -= result[0];
     free(arg_edges);
     delete[] result;
+}
+
+void save(std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t, pair_hash>
+              &costs,
+          uint32_t Vertices, uint32_t Edges) {
+    std::string filename;
+    std::cout<<"Save As: ";
+    std::cin >> filename;
+    write_data(costs, Vertices, Edges, filename);
+}
+
+int import(std::unordered_map<uint32_t, uint32_t *> &inbound,
+           std::unordered_map<uint32_t, uint32_t *> &outbound,
+           std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t,
+                              pair_hash> &costs,
+           uint32_t &Vertices, uint32_t &Edges, uint32_t vertex_buffer,
+           IdManager &manager, char *filename) {
+    char tmp_filename[100];
+    std::cin >> tmp_filename;
+    if (file_exists(tmp_filename)) {
+        strcpy(filename, tmp_filename);
+        return 2;
+    }
+    std::cout << "File " << tmp_filename << " does not exist\n";
+    return 0;
 }

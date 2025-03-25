@@ -1,8 +1,5 @@
+*
 /Python
 /DataSets
-*.exe
-*.sh
-*.orig
-*.py
-*.zip
-
+!*.cpp
+!*.h

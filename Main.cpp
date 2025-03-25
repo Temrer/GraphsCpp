@@ -1,7 +1,6 @@
 // Copyright (C) 2025 Temrer
 // All rights reserved.
 //
-// This file is part of the project [Project Name].
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
@@ -67,7 +66,7 @@ int choose_option(std::unordered_map<uint32_t, uint32_t *> &inbound,
                   std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t,
                                      pair_hash> &costs,
                   IdManager &manager, uint32_t &Vertices, uint32_t &Edges,
-                  uint32_t vertex_buffer) {
+                  uint32_t vertex_buffer, char *filename) {
     int option = 0;
     std::string soption;
     while (!option) {
@@ -120,12 +119,20 @@ int choose_option(std::unordered_map<uint32_t, uint32_t *> &inbound,
             break;
         }
         case 10: {
-            opt10(vertex_buffer, outbound, inbound, costs);
+            opt10(vertex_buffer, Edges, outbound, inbound, costs);
             break;
         }
         case 11: {
-            opt11(vertex_buffer, outbound, inbound, costs);
+            opt11(vertex_buffer, Edges, outbound, inbound, costs);
             break;
+        }
+        case 12: {
+            save(costs, Vertices, Edges);
+            break;
+        }
+        case 13: {
+            return import(inbound, outbound, costs, Vertices, Edges,
+                          vertex_buffer, manager, filename);
         }
     }
     return 0;
@@ -134,18 +141,12 @@ int choose_option(std::unordered_map<uint32_t, uint32_t *> &inbound,
 // TODO(Temeraire): create multiple batches for inputs bigger than
 // MAX_OPERATON_BUFFER
 // TODO(Temeraire): free allocated memory used when initializing vectors
-int main(int argc, char **argv) {
-    std::cout << argc << " | " << argv;
-    auto start_time = std::chrono::high_resolution_clock::now();
-    if (argc < 2) {
-        std::cout << "No file specified. Exiting...\n";
-        return 0;
-    }
 
+int main_loop(char *filename, uint32_t vertex_buffer) {
     // /////////////////////////////////////////////////////////////////
     // Declaring variables /////////////////////////////////////////////
     // /////////////////////////////////////////////////////////////////
-
+    int exit_value = 0;
     std::unordered_map<uint32_t, uint32_t *> inbound;
     std::unordered_map<uint32_t, uint32_t *> outbound;
     std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t, pair_hash>
@@ -155,12 +156,6 @@ int main(int argc, char **argv) {
     uint32_t vertices, edges;
     int ccond = 0;
 
-    uint32_t vertex_buffer = 10;
-    // reading overhead-buffer size for the lists of vertices
-    if (argc >= 3) {
-        vertex_buffer = std::stoi(argv[2]);
-    }
-
     // /////////////////////////////////////////////////////////////////
     // End of declaring variables //////////////////////////////////////
     // /////////////////////////////////////////////////////////////////
@@ -169,14 +164,15 @@ int main(int argc, char **argv) {
     // Start main loop /////////////////////////////////////////////////
     // /////////////////////////////////////////////////////////////////
 
-    int a;
-    std::cin >> a;
-    read_data(inbound, outbound, costs, vertices, edges, argv[1], vertex_buffer,
-              id_manager);
+    // int a;
+    // std::cin >> a;
+    read_data(inbound, outbound, costs, vertices, edges, filename,
+              vertex_buffer, id_manager);
     while (!ccond) {
         print_menu();
         ccond = choose_option(inbound, outbound, costs, id_manager, vertices,
-                              edges, vertex_buffer);
+                              edges, vertex_buffer, filename);
+        if (ccond == 2) exit_value = 2;
     }
 
     // /////////////////////////////////////////////////////////////////
@@ -191,6 +187,27 @@ int main(int argc, char **argv) {
         free(entry.second);
     }
     std::cout.flush();
+    return exit_value;
+}
+int main(int argc, char **argv) {
+    auto start_time = std::chrono::high_resolution_clock::now();
+    if (argc < 2) {
+        std::cout << "No file specified. Exiting...\n";
+        return 0;
+    }
+    uint32_t vertex_buffer = 10;
+    // reading overhead-buffer size for the lists of vertices
+    if (argc >= 3) {
+        vertex_buffer = std::stoi(argv[2]);
+    }
+    char filename[100];
+    strcpy(filename, argv[1]);
+
+    int running = 1;
+
+    while (running) {
+        running = main_loop(filename, vertex_buffer);
+    }
 
     auto end_time = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
