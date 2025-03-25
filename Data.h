@@ -146,4 +146,18 @@ uint32_t *remove_vertices(uint32_t *list_of_vertices, IdManager &manager,
                           std::unordered_map<uint32_t, uint32_t *> &inbound,
                           std::unordered_map<std::pair<uint32_t, uint32_t>,
                                              uint32_t, pair_hash> &costs);
+
+uint32_t *add_edges(Edge *list_of_edges, uint32_t *weights,
+                    uint16_t vertex_buffer,
+                    std::unordered_map<uint32_t, uint32_t *> &outbound,
+                    std::unordered_map<uint32_t, uint32_t *> &inbound,
+                    std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t,
+                                       pair_hash> &costs);
+
+uint32_t *remove_edges(Edge *list_of_edges, uint16_t vertex_buffer,
+                       std::unordered_map<uint32_t, uint32_t *> &outbound,
+                       std::unordered_map<uint32_t, uint32_t *> &inbound,
+                       std::unordered_map<std::pair<uint32_t, uint32_t>,
+                                          uint32_t, pair_hash> &costs);
+
 #endif  // DATA_H_

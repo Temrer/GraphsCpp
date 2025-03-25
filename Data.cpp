@@ -384,3 +384,83 @@ uint32_t *remove_vertices(uint32_t *list_of_vertices, IdManager &manager,
     }
     return result;
 }
+
+uint32_t *add_edges(Edge *list_of_edges, uint32_t *weights,
+                    uint16_t vertex_buffer,
+                    std::unordered_map<uint32_t, uint32_t *> &outbound,
+                    std::unordered_map<uint32_t, uint32_t *> &inbound,
+                    std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t,
+                                       pair_hash> &costs) {
+    uint32_t *result = new uint32_t[MAX_OPERATON_BUFFER + 1]{0};
+    result[0] = 0;  // Number of successfully added edges
+
+    uint16_t i = 0;
+    while (i < MAX_OPERATON_BUFFER) {
+        uint32_t parent = list_of_edges[i].parent,
+                 child = list_of_edges[i].child;
+        if (parent == NULL_EDGE.parent && child == NULL_EDGE.child) break;
+
+        if (outbound.find(parent) == outbound.end() ||
+            inbound.find(child) == inbound.end()) {
+            i++;
+            continue;
+        }
+
+        uint32_t *out_list = outbound[parent];
+        uint32_t *in_list = inbound[child];
+
+        if (!is_inside_array(out_list, child, out_list[0])) {
+            out_list[out_list[0] + 1] = child;
+            out_list[0]++;
+            in_list[in_list[0] + 1] = parent;
+            in_list[0]++;
+            result[++result[0]] = i;  // Store the index of the added edge
+            costs[std::make_pair(parent, child)] = weights[i];
+        }
+        i++;
+    }
+    return result;
+}
+
+uint32_t *remove_edges(Edge *list_of_edges, uint16_t vertex_buffer,
+                       std::unordered_map<uint32_t, uint32_t *> &outbound,
+                       std::unordered_map<uint32_t, uint32_t *> &inbound,
+                       std::unordered_map<std::pair<uint32_t, uint32_t>,
+                                          uint32_t, pair_hash> &costs) {
+    uint32_t *result = new uint32_t[MAX_OPERATON_BUFFER + 1]{0};
+    result[0] = 0;  // Number of successfully removed edges
+
+    uint16_t i = 0;
+    while (i < MAX_OPERATON_BUFFER) {
+        uint32_t parent = list_of_edges[i].parent,
+                 child = list_of_edges[i].child;
+        if (parent == NULL_EDGE.parent && child == NULL_EDGE.child) break;
+
+        if (outbound.find(parent) == outbound.end() ||
+            inbound.find(child) == inbound.end()) {
+            i++;
+            continue;
+        }
+
+        uint32_t *out_list = outbound[parent];
+        uint32_t *in_list = inbound[child];
+
+        for (uint32_t j = 1; j <= out_list[0]; j++) {
+            if (out_list[j] == child) {
+                out_list[j] = out_list[out_list[0]--];
+                for (uint32_t k = 1; k <= in_list[0]; k++) {
+                    if (in_list[k] == parent) {
+                        in_list[k] = in_list[in_list[0]--];
+                        result[++result[0]] =
+                            i;  // Store the index of the removed edge
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+        costs.erase(std::make_pair(parent, child));
+        i++;
+    }
+    return result;
+}

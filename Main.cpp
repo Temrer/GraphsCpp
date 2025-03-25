@@ -24,6 +24,7 @@
 #include <sys/types.h>
 
 #include <chrono>
+#include <csignal>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -116,6 +117,14 @@ int choose_option(std::unordered_map<uint32_t, uint32_t *> &inbound,
         }
         case 9: {
             opt9(outbound, inbound, costs, manager, Vertices);
+            break;
+        }
+        case 10: {
+            opt10(vertex_buffer, outbound, inbound, costs);
+            break;
+        }
+        case 11: {
+            opt11(vertex_buffer, outbound, inbound, costs);
             break;
         }
     }

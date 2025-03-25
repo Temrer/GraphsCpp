@@ -256,3 +256,79 @@ void opt9(std::unordered_map<uint32_t, uint32_t *> &outbound,
     free(arg_vertices);
     free(result);
 }
+
+void opt10(uint16_t vertex_buffer,
+           std::unordered_map<uint32_t, uint32_t *> &outbound,
+           std::unordered_map<uint32_t, uint32_t *> &inbound,
+           std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t,
+                              pair_hash> &costs) {
+    std::cout << "Insert the edges you want to add (format: vertex1 vertex2 "
+                 "weight), type 'confirm' to finish:\n";
+
+    Edge *arg_edges = new Edge[MAX_OPERATON_BUFFER];
+    std::fill(arg_edges, arg_edges + MAX_OPERATON_BUFFER, NULL_EDGE);
+    uint32_t *weights = new uint32_t[MAX_OPERATON_BUFFER];
+    std::fill(weights, weights + MAX_OPERATON_BUFFER, UINT32_MAX);
+
+    std::string i1, i2, i3;
+    uint16_t i = 0;
+    int bl = 1;
+    while (bl && i < MAX_OPERATON_BUFFER) {
+        std::cin >> i1;
+        if (i1 == "confirm") {
+            bl = 0;
+        }
+        if (bl) {
+            std::cin >> i2 >> i3;
+            Edge e;
+            uint32_t a, b, c1;
+            a = s2i(i1);
+            b = s2i(i2);
+            c1 = s2i(i3);
+            if (a == UINT32_MAX || b == UINT32_MAX || c1 == UINT32_MAX)
+                continue;
+            weights[i] = c1;
+            e.parent = a;
+            e.child = b;
+            arg_edges[i] = e;
+            i++;
+        }
+    }
+
+    uint32_t *result =
+        add_edges(arg_edges, weights, vertex_buffer, outbound, inbound, costs);
+
+    std::cout << "Added edges:\n";
+    for (uint16_t i = 1; i <= result[0]; i++) {
+        std::cout << "(" << arg_edges[i - 1].parent << ", "
+                  << arg_edges[i - 1].child << ") with weight "
+                  << weights[i - 1] << "\n";
+    }
+
+    delete[] weights;
+    delete[] arg_edges;
+    delete[] result;
+}
+
+void opt11(uint16_t vertex_buffer,
+           std::unordered_map<uint32_t, uint32_t *> &outbound,
+           std::unordered_map<uint32_t, uint32_t *> &inbound,
+           std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t,
+                              pair_hash> &costs) {
+    std::cout << "Insert the edges you want to remove (format: vertex1 "
+                 "vertex2), type 'confirm' to finish:\n";
+
+    Edge *arg_edges = read_edges();
+
+    uint32_t *result =
+        remove_edges(arg_edges, vertex_buffer, outbound, inbound, costs);
+
+    std::cout << "Removed edges:\n";
+    for (uint16_t i = 1; i <= result[0]; i++) {
+        std::cout << "(" << arg_edges[i - 1].parent << ", "
+                  << arg_edges[i - 1].child << ")\n";
+    }
+
+    free(arg_edges);
+    delete[] result;
+}
