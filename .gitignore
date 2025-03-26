@@ -1,5 +1,12 @@
 *
-/Python
+/Python/.idea
+/Python/__pycache__
 /DataSets
-!*.cpp
-!*.h
+!/CPP
+!/Python
+!/Python/*
+!CPP/*.cpp
+!CPP/*.h
+!Python/*.py
+!Python/*/*.py
+!Python/settings/settings.properties

@@ -348,11 +348,49 @@ void opt11(uint16_t vertex_buffer, uint32_t &Edges,
     delete[] result;
 }
 
+void opt14(std::unordered_map<uint32_t, uint32_t *> &map) {
+    auto it = map.begin();
+    while (it != map.end()) {
+        std::cout << it->first << "\n";
+        it++;
+    }
+}
+
+void opt15(std::unordered_map<uint32_t, uint32_t *> &map) {
+    uint32_t v = UINT32_MAX;
+    std::string vs;
+    std::cout << "Input vertex to parse: ";
+    while (v == UINT32_MAX) {
+        std::cin >> vs;
+        v = s2i(vs);
+    }
+    auto it = map.begin();
+    if (it == map.end()) return;
+    std::cout << v << " ";
+    for (uint16_t i = 1; i <= map[v][0]; i++) std::cout << map[v][i] << " ";
+    std::cout << "\n";
+}
+
+void opt16(std::unordered_map<uint32_t, uint32_t *> &map) {
+    uint32_t v = UINT32_MAX;
+    std::string vs;
+    std::cout << "Input vertex to parse: ";
+    while (v == UINT32_MAX) {
+        std::cin >> vs;
+        v = s2i(vs);
+    }
+    auto it = map.begin();
+    if (it == map.end()) return;
+    std::cout << v << " ";
+    for (uint16_t i = 1; i <= map[v][0]; i++) std::cout << map[v][i] << " ";
+    std::cout << "\n";
+}
+
 void save(std::unordered_map<std::pair<uint32_t, uint32_t>, uint32_t, pair_hash>
               &costs,
           uint32_t Vertices, uint32_t Edges) {
     std::string filename;
-    std::cout<<"Save As: ";
+    std::cout << "Save As: ";
     std::cin >> filename;
     write_data(costs, Vertices, Edges, filename);
 }

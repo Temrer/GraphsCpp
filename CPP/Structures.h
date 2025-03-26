@@ -21,6 +21,7 @@
 // WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 // OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 // ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 #ifndef STRUCTURES_H_
 #define STRUCTURES_H_
 
@@ -32,7 +33,7 @@
 #include <vector>
 
 /**
- * @brief Represents an edge in a graph.
+ * @brief Represents an edge in a graph, storing parent and child node IDs.
  */
 struct Edge {
     uint32_t parent;  ///< The parent node of the edge.
@@ -45,11 +46,10 @@ const Edge NULL_EDGE = {UINT32_MAX, UINT32_MAX};
 /**
  * @brief A simple linked list structure to store edges.
  *
- * This is used to efficiently store inbound and outbound edges
- * in a memory-efficient manner.
+ * This structure is used for efficiently storing adjacency lists in memory.
  */
 struct LinkedList {
-    uint32_t value;    ///< The value stored in the node.
+    uint32_t value;    ///< The vertex value stored in the node.
     LinkedList *next;  ///< Pointer to the next node in the list.
 
     /**
@@ -63,10 +63,17 @@ struct LinkedList {
  * @brief A hash function for pairs of values.
  *
  * This struct provides a custom hash function for `std::pair`
- * to be used in unordered data structures like `std::unordered_map` or
- * `std::unordered_set`.
+ * to be used in unordered data structures like `std::unordered_map`.
  */
 struct pair_hash {
+    /**
+     * @brief Hashes a pair of values.
+     *
+     * @tparam T1 Type of the first element.
+     * @tparam T2 Type of the second element.
+     * @param p The pair to be hashed.
+     * @return std::size_t The computed hash value.
+     */
     template <class T1, class T2>
     std::size_t operator()(const std::pair<T1, T2> &p) const {
         auto h1 = std::hash<T1>{}(p.first);
@@ -76,24 +83,30 @@ struct pair_hash {
 };
 
 /**
- * @brief A structure that allows a more advanced storing of vertices and their
- *adjacency lists
+ * @brief A structure that stores a vertex and its adjacency list.
  */
 struct vertex_map {
-    uint32_t *list;   ///< Pointer to it's adjacency list
-    uint32_t vertex;  ///< The vertex
+    uint32_t *list;   ///< Pointer to the adjacency list.
+    uint32_t vertex;  ///< The vertex ID.
 
     /**
-     * @brief Constructs a vertex_map ellement
-     * @param v The vertex
-     * @param l It's adjacency list
+     * @brief Constructs a vertex_map element.
+     * @param v The vertex ID.
+     * @param l Pointer to its adjacency list.
      */
     explicit vertex_map(uint32_t v, uint32_t *l) : vertex(v), list(l) {}
 };
 
+/**
+ * @brief Manages vertex IDs, including allocation and reuse of IDs.
+ *
+ * This structure tracks used and unused vertex IDs, allowing for efficient
+ * management of dynamically changing graphs.
+ */
 struct IdManager {
-    std::unordered_map<uint32_t, uint32_t> map;
-    std::vector<uint32_t> unused_ids;
-    uint32_t max_vertex=0;
+    std::unordered_map<uint32_t, uint32_t> map;  ///< Maps vertices to IDs.
+    std::vector<uint32_t> unused_ids;  ///< Stores IDs that can be reused.
+    uint32_t max_vertex = 0;  ///< Tracks the highest assigned vertex ID.
 };
+
 #endif  // STRUCTURES_H_

@@ -55,6 +55,9 @@ void print_menu() {
 11. Remove edges                      \n\
 12. Save a copy                       \n\
 13. Open a Graph                      \n\
+14. Parse vertices                    \n\
+15. Parse outbound                    \n\
+16. Parse inbound                     \n\
 --------------------------------------\n\
 0.  Exit\n\
 --------------------------------------\n";
@@ -133,6 +136,15 @@ int choose_option(std::unordered_map<uint32_t, uint32_t *> &inbound,
         case 13: {
             return import(inbound, outbound, costs, Vertices, Edges,
                           vertex_buffer, manager, filename);
+        }
+        case 14: {
+            opt14(outbound);
+        }
+        case 15: {
+            opt14(outbound);
+        }
+        case 16: {
+            opt14(inbound);
         }
     }
     return 0;
