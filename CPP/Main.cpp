@@ -139,12 +139,15 @@ int choose_option(std::unordered_map<uint32_t, uint32_t *> &inbound,
         }
         case 14: {
             opt14(outbound);
+            break;
         }
         case 15: {
-            opt14(outbound);
+            opt15(outbound);
+            break;
         }
         case 16: {
-            opt14(inbound);
+            opt16(inbound);
+            break;
         }
     }
     return 0;

@@ -366,7 +366,6 @@ void opt15(std::unordered_map<uint32_t, uint32_t *> &map) {
     }
     auto it = map.begin();
     if (it == map.end()) return;
-    std::cout << v << " ";
     for (uint16_t i = 1; i <= map[v][0]; i++) std::cout << map[v][i] << " ";
     std::cout << "\n";
 }
@@ -381,7 +380,6 @@ void opt16(std::unordered_map<uint32_t, uint32_t *> &map) {
     }
     auto it = map.begin();
     if (it == map.end()) return;
-    std::cout << v << " ";
     for (uint16_t i = 1; i <= map[v][0]; i++) std::cout << map[v][i] << " ";
     std::cout << "\n";
 }
